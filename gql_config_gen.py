@@ -8,37 +8,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 GQL_ENDPOINT = "https://demo.nautobot.com/graphql/"
-#GQL_ENDPOINT = "http://localhost:8080/graphql/"
 CSRF_TOKEN_ENDPOINT = "https://demo.nautobot.com/api/"
-#CSRF_TOKEN_ENDPOINT = "http://localhost:8080/api/"
-#TOKEN="foobar"
 TOKEN="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-#TOKEN="1234567890123456789012345678901234567890"
-HOST="leaf1"
-
-#query_str = f"""
-#{{
-#    devices(name: "{HOST}") {{
-#        interfaces(tags: "interface-spine-leaf") {{
-#            name
-#            ip_addresses {{
-#                address
-#            }}
-#            connected_interface {{
-#                name
-#                ip_addresses {{
-#                    ip_version
-#                    address
-#                }}
-#                device {{
-#                    name
-#                   _custom_field_data
-#                }}
-#            }}
-#        }}
-#    }}
-#}}
-#"""
 
 query_str = """
 query {
