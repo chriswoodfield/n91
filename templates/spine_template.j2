@@ -1,0 +1,74 @@
+no aaa root
+!
+username admin privilege 15 role network-admin secret sha512 $6$tzjoYPFr//XwSXuW$AGNtlxmAt2UmMEf8oL0q9f63yBKimX2NIkIT8QYjxzm8Pj1pBhr5rBmlMEQzXCWUsILNp140NaVZEcd4z9X4m/
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname {{ hostname }}
+!
+spanning-tree mode mstp
+!
+management api http-commands
+   protocol http
+   no shutdown
+!
+management api gnmi
+   transport grpc default
+!
+management api netconf
+   transport ssh default
+
+{% for interface in fabric_interfaces %}
+interface {{ interface.name }}
+  no switchport
+  description {{ interface.description }}
+{% for ip4_addr in interface.ip4_addr -%}
+  ip address {{ ip4_addr }}
+{% endfor %}
+{% for ip6_addr in interface.ip6_addr -%}
+  ipv6 address {{ ip6_addr }}
+{% endfor %}
+  no shutdown
+{% endfor %}
+!
+interface Loopback0
+{% for lo_ip4 in lo_addresses.lo_ip4 -%}
+  ip address {{ lo_ip4 }}
+{% endfor %}
+{% for lo_ip6 in lo_addresses.lo_ip6 -%}
+  ipv6 address {{ lo_ip6 }}
+{% endfor %}
+no shutdown
+  no shutdown
+!
+interface Management0
+  ip address {{ mgmt_ip }}
+!
+ip routing
+!
+ipv6 unicast-routing
+!
+router bgp {{ bgp_asn }}
+   no bgp default ipv4-unicast
+   maximum-paths 8 ecmp 64
+   neighbor LEAF peer group
+   neighbor LEAF send-community extended
+   neighbor LEAF_IP6 peer group
+   neighbor LEAF_IP6 send-community extended
+{% for neighbor in bgp_neighbors_ip4 %}
+  neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
+  neighbor {{ neighbor.addr }} peer group LEAF
+{% endfor %}
+{% for neighbor in bgp_neighbors_ip6 %}
+  neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
+  neighbor {{ neighbor.addr }} peer group LEAF_IP6
+{% endfor %}
+  address-family ipv4
+    neighbor LEAF activate
+    redistribute connected
+  address-family ipv6
+    neighbor LEAF_IP6 activate
+    redistribute connected
+end

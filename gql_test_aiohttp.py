@@ -7,7 +7,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 GQL_ENDPOINT = "http://localhost:8080/graphql/"
 CSRF_TOKEN_ENDPOINT = "http://localhost:8080/api/"
-TOKEN="1234567890123456789012345678901234567890"
+TOKEN="foobar"
+#TOKEN="1234567890123456789012345678901234567890"
 
 query_str = """
 query {

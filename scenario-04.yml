@@ -1,0 +1,87 @@
+name: scenario-04
+
+mgmt:
+  network: mgmt
+  ipv4-subnet: 172.22.0.0/24
+
+topology:
+  kinds:
+    ceos:
+      image: ceos:latest
+
+  nodes:
+    spine1:
+      kind: ceos
+      startup-config: /opt/clab/scenario-04/files/spine1.conf
+      mgmt-ipv4: 172.22.0.2
+      labels:
+        graph-level: 2
+
+    spine2:
+      kind: ceos
+      startup-config: /opt/clab/scenario-04/files/spine2.conf
+      mgmt-ipv4: 172.22.0.3
+      labels:
+        graph-level: 3
+        graph-icon: switch
+
+    leaf1:
+      kind: ceos
+      startup-config: /opt/clab/scenario-04/files/leaf1.conf
+      mgmt-ipv4: 172.22.0.4
+      labels:
+        graph-level: 2
+
+    leaf2:
+      kind: ceos
+      startup-config: /opt/clab/scenario-04/files/leaf2.conf
+      mgmt-ipv4: 172.22.0.5
+      labels:
+        graph-level: 3
+        graph-icon: switch
+
+    s1:
+      kind: linux
+      image: netreplica/ubuntu-host
+      binds:
+        - /opt/clab/scenario-04/files/init_s1.sh:/tmp/init.sh
+      cmd: "sh /tmp/init.sh"
+      mgmt-ipv4: 172.22.0.6
+      labels:
+        graph-level: 4
+        graph-icon: server
+
+    s2:
+      kind: linux
+      binds:
+        - /opt/clab/scenario-04/files/init_s2.sh:/tmp/init.sh
+      cmd: "sh /tmp/init.sh"
+      image: netreplica/ubuntu-host
+      mgmt-ipv4: 172.22.0.7
+      labels:
+        graph-level: 4
+        graph-icon: server
+
+    graphite:
+      kind: linux
+      image: netreplica/graphite:nanog86
+      mgmt-ipv4: 172.22.0.100
+      env:
+        CLAB_SSH_CONNECTION: ${SSH_CONNECTION}
+      binds:
+        - __clabDir__/topology-data.json:/htdocs/lab/default/topology-data.json:ro
+        - __clabDir__/ansible-inventory.yml:/htdocs/lab/default/ansible-inventory.yml:ro
+      ports:
+        - 8080:80
+      exec:
+        - sh -c 'graphite_motd.sh 8080'
+      labels:
+        graph-hide: yes
+
+  links:
+      - endpoints: ["leaf1:eth1", "s1:eth1"]
+      - endpoints: ["leaf2:eth1", "s2:eth1"]
+      - endpoints: ["spine1:eth1", "leaf1:eth2"]
+      - endpoints: ["spine1:eth2", "leaf2:eth2"]
+      - endpoints: ["spine2:eth1", "leaf1:eth3"]
+      - endpoints: ["spine2:eth2", "leaf2:eth3"]

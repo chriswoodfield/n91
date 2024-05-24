@@ -1,0 +1,106 @@
+no aaa root
+!
+username admin privilege 15 role network-admin secret sha512 $6$tzjoYPFr//XwSXuW$AGNtlxmAt2UmMEf8oL0q9f63yBKimX2NIkIT8QYjxzm8Pj1pBhr5rBmlMEQzXCWUsILNp140NaVZEcd4z9X4m/
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname {{ hostname }}
+!
+spanning-tree mode mstp
+!
+management api http-commands
+   protocol http
+   no shutdown
+!
+management api gnmi
+   transport grpc default
+!
+management api netconf
+   transport ssh default
+!
+{%- for vlan_id in vxlan_vlans %}
+vlan {{ vlan_id }}
+   name VXLAN_VLAN_{{ vlan_id }}
+!
+{%- endfor %}
+interface vxlan1
+   vxlan source-interface Loopback0
+   vxlan udp-port 4789
+{%- for vlan_id in vxlan_vlans %}
+   vxlan vlan {{ vlan_id }} vni 10{{ vlan_id }}
+{%- endfor %}
+   vxlan flood vtep {{ vxlan_flood_ips }}
+!
+{%- for interface in access_interfaces %}
+interface {{ interface.name }}
+   description "{{ interface.description }}"
+   switchport mode access
+   switchport access vlan {{ interface.vlan_id }}
+   no shutdown
+!
+{%- endfor %}
+{%- for interface in fabric_interfaces %}
+interface {{ interface.name }}
+   no switchport
+   description "{{ interface.description }}"
+{%- for ip4_addr in interface.ip4_addr %}
+   ip address {{ ip4_addr }}
+{%- endfor %}
+{%- for ip6_addr in interface.ip6_addr %}
+   ipv6 address {{ ip6_addr }}
+{%- endfor %}
+   no shutdown
+!
+{%- endfor %}
+interface Loopback0
+{%- for lo_ip4 in lo_addresses.lo_ip4 %}
+   ip address {{ lo_ip4 }}
+{%- endfor %}
+{%- for lo_ip6 in lo_addresses.lo_ip6 %}
+   ipv6 address {{ lo_ip6 }}
+{%- endfor %}
+   no shutdown
+!
+interface Management0
+   ip address {{ mgmt_ip }}
+!
+ip routing
+!
+ipv6 unicast-routing
+!
+ip route 0.0.0.0/0 172.22.0.1
+!
+router bgp {{ bgp_asn }}
+   no bgp default ipv4-unicast
+   rd auto
+   maximum-paths 8 ecmp 64
+   neighbor SPINE peer group
+   neighbor SPINE send-community extended
+   neighbor SPINE_IP6 peer group
+   neighbor SPINE_IP6 send-community extended
+{%- for vlan_id in vxlan_vlans %}
+   vlan {{ vlan_id }}
+      rd {{ lo_ip4_addr }}:10{{ vlan_id }}
+      route-target both 10{{ vlan_id }}:10{{ vlan_id }}
+      redistribute learned
+{%- endfor %}
+{%- for neighbor in bgp_neighbors.bgp_neighbors_ip4 %}
+   neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
+   neighbor {{ neighbor.addr }} peer group SPINE
+{%- endfor %}
+{%- for neighbor in bgp_neighbors.bgp_neighbors_ip6 %}
+   neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
+   neighbor {{ neighbor.addr }} peer group SPINE_IP6
+{%- endfor %}
+   address-family ipv4
+      neighbor SPINE activate
+      redistribute connected
+   address-family ipv6
+      neighbor SPINE_IP6 activate
+      redistribute connected
+   address-family evpn
+      neighbor SPINE activate
+!
+end
