@@ -14,11 +14,12 @@ import json
 import pprint
 import jinja2
 from netaddr import IPNetwork
+import pdb
 
 
-GQL_ENDPOINT = "http://54.70.170.190:8080/api/graphql/"
-CSRF_TOKEN_ENDPOINT = "http://54.70.170.190:8080/api/"
-TOKEN="1dc0438033a3b624e2ddc92995d7d4cd1bdee69a"
+GQL_ENDPOINT = "https://n91-nautobot.hackathon.nanog.org/api/graphql/"
+CSRF_TOKEN_ENDPOINT = "https://n91-nautobot.hackathon.nanog.org/api/"
+TOKEN="8fa11df87d6e7ac4847389cb381c84d960b72c7f"
 
 
 class GqlQuery:
@@ -146,7 +147,6 @@ class Generator:
             "bgp_neighbors": bgp_neighbors
         })    
     
-        #pdb.set_trace()
         return template_data
     
     async def render(self, model_data, template_path):
@@ -266,14 +266,16 @@ class Generator:
             # Filter on tag name
             if "interface-fabric" in list(tag.name for tag in interface.tags):
                 remote_asn = interface.connected_interface.device.custom_field_data.bgp_asn
+                remote_name = interface.connected_interface.device.name
                 for ip_address in interface.connected_interface.ip_addresses:
                     if ip_address.ip_version == 4:
                         peer_dict["bgp_neighbors_ip4"].append({"addr": str(IPNetwork(ip_address.address).ip),
+                                                               "description": remote_name,
                                                                 "asn": remote_asn})
                     elif ip_address.ip_version == 6:
                         peer_dict["bgp_neighbors_ip6"].append({"addr": str(IPNetwork(ip_address.address).ip),
+                                                               "description": remote_name,
                                                                 "asn": remote_asn})
-                        
         return peer_dict
 
 
@@ -283,10 +285,7 @@ async def main():
     g = Generator()
     model = await g.build_model(device_name)
     # Get template filename from device name
-    if "leaf" in device_name:
-        template_name = "templates/leaf_template.j2"
-    elif "spine" in device_name:
-        template_name = "templates/spine_template.j2"
+    template_name="bgp_template.j2"
 
     print(await g.render(model, template_name))
     

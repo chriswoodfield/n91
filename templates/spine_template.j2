@@ -19,29 +19,28 @@ management api gnmi
 !
 management api netconf
    transport ssh default
-
-{% for interface in fabric_interfaces %}
+!
+{%- for interface in fabric_interfaces %}
 interface {{ interface.name }}
-  no switchport
-  description {{ interface.description }}
-{% for ip4_addr in interface.ip4_addr -%}
-  ip address {{ ip4_addr }}
-{% endfor %}
-{% for ip6_addr in interface.ip6_addr -%}
-  ipv6 address {{ ip6_addr }}
-{% endfor %}
-  no shutdown
-{% endfor %}
+   no switchport
+   description {{ interface.description }}
+{%- for ip4_addr in interface.ip4_addr %}
+   ip address {{ ip4_addr }}
+{%- endfor %}
+{%- for ip6_addr in interface.ip6_addr %}
+   ipv6 address {{ ip6_addr }}
+{%- endfor %}
+   no shutdown
+{%- endfor %}
 !
 interface Loopback0
-{% for lo_ip4 in lo_addresses.lo_ip4 -%}
-  ip address {{ lo_ip4 }}
-{% endfor %}
-{% for lo_ip6 in lo_addresses.lo_ip6 -%}
-  ipv6 address {{ lo_ip6 }}
-{% endfor %}
-no shutdown
-  no shutdown
+{%-for lo_ip4 in lo_addresses.lo_ip4 %}
+   ip address {{ lo_ip4 }}
+{%- endfor %}
+{%- for lo_ip6 in lo_addresses.lo_ip6 %}
+   ipv6 address {{ lo_ip6 }}
+{%- endfor %}
+   no shutdown
 !
 interface Management0
   ip address {{ mgmt_ip }}
@@ -57,18 +56,20 @@ router bgp {{ bgp_asn }}
    neighbor LEAF send-community extended
    neighbor LEAF_IP6 peer group
    neighbor LEAF_IP6 send-community extended
-{% for neighbor in bgp_neighbors_ip4 %}
-  neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
-  neighbor {{ neighbor.addr }} peer group LEAF
-{% endfor %}
-{% for neighbor in bgp_neighbors_ip6 %}
-  neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
-  neighbor {{ neighbor.addr }} peer group LEAF_IP6
-{% endfor %}
-  address-family ipv4
-    neighbor LEAF activate
-    redistribute connected
+{%- for neighbor in bgp_neighbors_ip4 %}
+   neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
+   neighbor {{ neighbor.addr }} peer group LEAF
+{%- endfor %}
+{%- for neighbor in bgp_neighbors_ip6 %}
+   neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
+   neighbor {{ neighbor.addr }} peer group LEAF_IP6
+{%- endfor %}
+   address-family ipv4
+      neighbor LEAF activate
+      redistribute connected
   address-family ipv6
-    neighbor LEAF_IP6 activate
-    redistribute connected
+      neighbor LEAF_IP6 activate
+      redistribute connected
+  address-family evpn
+      neighbor LEAF activate
 end

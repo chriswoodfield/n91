@@ -6,7 +6,7 @@ access_interfaces:
   - name: Ethernet1
     description: s2_lan
     vlan_id: 100
-spine_interfaces:
+fabric_interfaces:
   - name: Ethernet2
     description: spine1:eth1
     ip4_addr: 10.10.0.3/31

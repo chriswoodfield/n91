@@ -6,6 +6,7 @@ class TemplateModel:
     
     class BGPNeighbor(BaseModel):
         addr: str
+        description: str
         asn: int
 
     
@@ -20,13 +21,13 @@ class TemplateModel:
     class BGPNeighborList(BaseModel):
         bgp_neighbors_ip4: list[TemplateModel.BGPNeighbor]
         bgp_neighbors_ip6: list[TemplateModel.BGPNeighbor]
-       
-        
+
+
     class LoopbackAddressList(BaseModel):
         lo_ip4: list[str] = []
         lo_ip6: list[str] = []
-        
-        
+
+
     class Device(BaseModel):
         hostname: str
         vxlan_vlans: list[int] = []

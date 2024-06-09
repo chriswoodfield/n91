@@ -1,6 +1,6 @@
 ---
 hostname: spine1
-leaf_interfaces:
+fabric_interfaces:
   - name: Ethernet1
     description: leaf1:eth1
     ip4_addr: 10.10.0.0/31

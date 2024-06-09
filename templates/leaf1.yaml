@@ -25,12 +25,13 @@ fabric_interfaces:
     - 10.10.1.1/31
     ip6_addr: 
     - 2001:db8:10:10:1::1/127
-bgp_neighbors_ip4:
+bgp_neighbors:
+  bgp_neighbors_ip4:
   - addr: 10.10.0.0
     asn: 65000
   - addr: 10.10.1.0
     asn: 65000
-bgp_neighbors_ip6:
+  bgp_neighbors_ip6:
   - addr: "2001:db8:10:10::"
     asn: 65000
   - addr: "2001:db8:10:10:1::"

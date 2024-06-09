@@ -10,6 +10,15 @@ hostname {{ hostname }}
 !
 spanning-tree mode mstp
 !
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+{%- for vlan_id in vxlan_vlans %}
+vlan {{ vlan_id }}
+   name VXLAN_VLAN_{{ vlan_id }}
+!
+{%- endfor %}
 management api http-commands
    protocol http
    no shutdown
@@ -19,19 +28,6 @@ management api gnmi
 !
 management api netconf
    transport ssh default
-!
-{%- for vlan_id in vxlan_vlans %}
-vlan {{ vlan_id }}
-   name VXLAN_VLAN_{{ vlan_id }}
-!
-{%- endfor %}
-interface vxlan1
-   vxlan source-interface Loopback0
-   vxlan udp-port 4789
-{%- for vlan_id in vxlan_vlans %}
-   vxlan vlan {{ vlan_id }} vni 10{{ vlan_id }}
-{%- endfor %}
-   vxlan flood vtep {{ vxlan_flood_ips }}
 !
 {%- for interface in access_interfaces %}
 interface {{ interface.name }}
@@ -52,6 +48,14 @@ interface {{ interface.name }}
    ipv6 address {{ ip6_addr }}
 {%- endfor %}
    no shutdown
+!
+interface vxlan1
+   vxlan source-interface Loopback0
+   vxlan udp-port 4789
+{%- for vlan_id in vxlan_vlans %}
+   vxlan vlan {{ vlan_id }} vni 10{{ vlan_id }}
+{%- endfor %}
+   vxlan flood vtep {{ vxlan_flood_ips }}
 !
 {%- endfor %}
 interface Loopback0
@@ -80,26 +84,30 @@ router bgp {{ bgp_asn }}
    neighbor SPINE send-community extended
    neighbor SPINE_IP6 peer group
    neighbor SPINE_IP6 send-community extended
+{%- for neighbor in bgp_neighbors.bgp_neighbors_ip4 %}
+   neighbor {{ neighbor.addr }} peer group SPINE
+   neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
+   {%- endfor %}
+{%- for neighbor in bgp_neighbors.bgp_neighbors_ip6 %}
+   neighbor {{ neighbor.addr }} peer group SPINE_IP6
+   neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
+{%- endfor %}   
+   !
 {%- for vlan_id in vxlan_vlans %}
    vlan {{ vlan_id }}
       rd {{ lo_ip4_addr }}:10{{ vlan_id }}
       route-target both 10{{ vlan_id }}:10{{ vlan_id }}
       redistribute learned
 {%- endfor %}
-{%- for neighbor in bgp_neighbors.bgp_neighbors_ip4 %}
-   neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
-   neighbor {{ neighbor.addr }} peer group SPINE
-{%- endfor %}
-{%- for neighbor in bgp_neighbors.bgp_neighbors_ip6 %}
-   neighbor {{ neighbor.addr }} remote-as {{ neighbor.asn }}
-   neighbor {{ neighbor.addr }} peer group SPINE_IP6
-{%- endfor %}
+   !
    address-family ipv4
       neighbor SPINE activate
       redistribute connected
+   !
    address-family ipv6
       neighbor SPINE_IP6 activate
       redistribute connected
+   !
    address-family evpn
       neighbor SPINE activate
 !
